@@ -219,7 +219,7 @@ def compare_excels(file1_path: str, file2_path: str, output_path: str = "compari
                     "Cell": f"A{row + 2}",
                     "Row": row + 2,
                     "Column": "(แถวทั้งแถว)",
-                    "Diff_Type": "แถวเกิน",
+                    "Diff_Type": "แถวเกิน (ไฟล์ 1)",
                     "Value_File_1": "(มีข้อมูล)",
                     "Value_File_2": "(ไม่มีแถวนี้)",
                     "BgColor_File_1": "",
@@ -233,12 +233,72 @@ def compare_excels(file1_path: str, file2_path: str, output_path: str = "compari
                     "Cell": f"A{row + 2}",
                     "Row": row + 2,
                     "Column": "(แถวทั้งแถว)",
-                    "Diff_Type": "แถวเกิน",
+                    "Diff_Type": "แถวเกิน (ไฟล์ 2)",
                     "Value_File_1": "(ไม่มีแถวนี้)",
                     "Value_File_2": "(มีข้อมูล)",
                     "BgColor_File_1": "",
                     "BgColor_File_2": ""
                 })
+        
+        # คอลัมน์ที่เกินมาในไฟล์ที่ 1 - ตรวจสอบทุก Cell ในคอลัมน์ที่เกินมา
+        if df1.shape[1] > df2.shape[1]:
+            extra_cols = list(df1.columns[df2.shape[1]:])
+            for col_idx, col_name in enumerate(extra_cols):
+                actual_col_idx = df2.shape[1] + col_idx
+                col_letter = get_excel_column_letter(actual_col_idx + 1)
+                
+                for row in range(df1.shape[0]):
+                    cell_value = df1.iloc[row, actual_col_idx]
+                    # ตรวจสอบเฉพาะ Cell ที่มีค่า (ไม่ว่าง)
+                    if pd.notna(cell_value) and str(cell_value).strip() != '':
+                        cell_address = f"{col_letter}{row + 2}"
+                        
+                        # ตรวจสอบสีพื้นหลังด้วย (ถ้าเปิดใช้งาน)
+                        bg_color = ""
+                        if check_background:
+                            cell1 = ws1.cell(row=row + 2, column=actual_col_idx + 1)
+                            bg_color = color_to_readable(get_cell_background_color(cell1))
+                        
+                        diff_locations.append({
+                            "Cell": cell_address,
+                            "Row": row + 2,
+                            "Column": col_name,
+                            "Diff_Type": "คอลัมน์เกิน (ไฟล์ 1)",
+                            "Value_File_1": cell_value,
+                            "Value_File_2": "(ไม่มีคอลัมน์นี้)",
+                            "BgColor_File_1": bg_color,
+                            "BgColor_File_2": ""
+                        })
+        
+        # คอลัมน์ที่เกินมาในไฟล์ที่ 2 - ตรวจสอบทุก Cell ในคอลัมน์ที่เกินมา
+        if df2.shape[1] > df1.shape[1]:
+            extra_cols = list(df2.columns[df1.shape[1]:])
+            for col_idx, col_name in enumerate(extra_cols):
+                actual_col_idx = df1.shape[1] + col_idx
+                col_letter = get_excel_column_letter(actual_col_idx + 1)
+                
+                for row in range(df2.shape[0]):
+                    cell_value = df2.iloc[row, actual_col_idx]
+                    # ตรวจสอบเฉพาะ Cell ที่มีค่า (ไม่ว่าง)
+                    if pd.notna(cell_value) and str(cell_value).strip() != '':
+                        cell_address = f"{col_letter}{row + 2}"
+                        
+                        # ตรวจสอบสีพื้นหลังด้วย (ถ้าเปิดใช้งาน)
+                        bg_color = ""
+                        if check_background:
+                            cell2 = ws2.cell(row=row + 2, column=actual_col_idx + 1)
+                            bg_color = color_to_readable(get_cell_background_color(cell2))
+                        
+                        diff_locations.append({
+                            "Cell": cell_address,
+                            "Row": row + 2,
+                            "Column": col_name,
+                            "Diff_Type": "คอลัมน์เกิน (ไฟล์ 2)",
+                            "Value_File_1": "(ไม่มีคอลัมน์นี้)",
+                            "Value_File_2": cell_value,
+                            "BgColor_File_1": "",
+                            "BgColor_File_2": bg_color
+                        })
     
     # 6. แสดงผลและบันทึกไฟล์
     print("\n" + "=" * 60)
@@ -250,7 +310,10 @@ def compare_excels(file1_path: str, file2_path: str, output_path: str = "compari
         value_diffs = sum(1 for d in diff_locations if d.get('Diff_Type') == 'ค่า')
         color_diffs = sum(1 for d in diff_locations if d.get('Diff_Type') == 'สีพื้นหลัง')
         both_diffs = sum(1 for d in diff_locations if d.get('Diff_Type') == 'ค่า + สีพื้นหลัง')
-        row_diffs = sum(1 for d in diff_locations if d.get('Diff_Type') == 'แถวเกิน')
+        row_diffs_f1 = sum(1 for d in diff_locations if d.get('Diff_Type') == 'แถวเกิน (ไฟล์ 1)')
+        row_diffs_f2 = sum(1 for d in diff_locations if d.get('Diff_Type') == 'แถวเกิน (ไฟล์ 2)')
+        col_diffs_f1 = sum(1 for d in diff_locations if d.get('Diff_Type') == 'คอลัมน์เกิน (ไฟล์ 1)')
+        col_diffs_f2 = sum(1 for d in diff_locations if d.get('Diff_Type') == 'คอลัมน์เกิน (ไฟล์ 2)')
         
         print(f"\n❌ พบจุดต่างทั้งหมด {len(diff_locations)} จุด:")
         if value_diffs > 0:
@@ -259,8 +322,14 @@ def compare_excels(file1_path: str, file2_path: str, output_path: str = "compari
             print(f"   - สีพื้นหลังต่างกัน: {color_diffs} จุด")
         if both_diffs > 0:
             print(f"   - ค่า + สีต่างกัน: {both_diffs} จุด")
-        if row_diffs > 0:
-            print(f"   - แถวเกิน: {row_diffs} จุด")
+        if row_diffs_f1 > 0:
+            print(f"   - แถวเกินในไฟล์ 1: {row_diffs_f1} จุด")
+        if row_diffs_f2 > 0:
+            print(f"   - แถวเกินในไฟล์ 2: {row_diffs_f2} จุด")
+        if col_diffs_f1 > 0:
+            print(f"   - คอลัมน์เกินในไฟล์ 1: {col_diffs_f1} Cell (มีข้อมูล)")
+        if col_diffs_f2 > 0:
+            print(f"   - คอลัมน์เกินในไฟล์ 2: {col_diffs_f2} Cell (มีข้อมูล)")
         print()
         
         # แสดงรายละเอียดความแตกต่าง (จำกัดที่ 20 รายการแรก)
