@@ -6,6 +6,8 @@
 
 - ✅ เปรียบเทียบไฟล์ Excel แบบ Cell-by-Cell
 - ✅ ตรวจสอบความแตกต่างของขนาดไฟล์ (แถว/คอลัมน์)
+- ✅ ตรวจสอบสีพื้นหลังของ Cell
+- ✅ ตรวจจับแถว/คอลัมน์ที่เกินมา
 - ✅ ข้าม (Ignore) ความแตกต่างที่เป็นช่องว่าง (Whitespace)
 - ✅ แสดงผลลัพธ์ในหน้าจอ Console
 - ✅ สร้างไฟล์รายงาน Excel สรุปความแตกต่าง
@@ -40,6 +42,20 @@ python compare_excel.py
 python compare_excel.py -f1 ไฟล์แรก.xlsx -f2 ไฟล์สอง.xlsx -o รายงาน.xlsx
 ```
 
+### วิธีที่ 3: ระบุ Path เต็ม (ไฟล์อยู่คนละโฟลเดอร์)
+
+```bash
+python compare_excel.py -f1 "C:\path\to\file\file1.xlsx" -f2 "D:\path\to\file\file2.xlsx"
+```
+
+**หมายเหตุ:** ถ้า path มีช่องว่าง ให้ครอบด้วย `"..."`
+
+### วิธีที่ 4: ไม่ตรวจสอบสีพื้นหลัง
+
+```bash
+python compare_excel.py --no-color
+```
+
 ### Options ทั้งหมด
 
 | Option | คำอธิบาย | ค่า Default |
@@ -47,6 +63,7 @@ python compare_excel.py -f1 ไฟล์แรก.xlsx -f2 ไฟล์สอง
 | `-f1`, `--file1` | พาธไฟล์ Excel ไฟล์ที่ 1 | `file1.xlsx` |
 | `-f2`, `--file2` | พาธไฟล์ Excel ไฟล์ที่ 2 | `file2.xlsx` |
 | `-o`, `--output` | พาธไฟล์รายงานผลลัพธ์ | `comparison_report.xlsx` |
+| `--no-color` | ไม่ตรวจสอบสีพื้นหลังของ Cell | - |
 
 ## 📋 ตัวอย่างผลลัพธ์
 
